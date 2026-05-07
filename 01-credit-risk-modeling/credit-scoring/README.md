@@ -35,6 +35,28 @@ Running the script produces:
 python scorecard.py
 ```
 
+This emits the IV ranking, points table, KS/Gini metrics, and score-band default rates to stdout, plus four charts to `charts/`:
+
+### Information Value
+![Information Value](charts/information_value.png)
+
+IV by feature. The 0.02 threshold (drop as noise) and 0.10 threshold (medium predictive power) are marked. Anything above 0.50 should be reviewed for leakage; here all features fall in the medium-strong range.
+
+### Default rate by score band
+![Default rate by band](charts/default_rate_by_band.png)
+
+The deployment artifact: as score band increases, default rate falls monotonically. This is the table underwriters use for cut-off decisions.
+
+### ROC curve
+![ROC curve](charts/roc_curve.png)
+
+ROC and Gini on the test sample.
+
+### Score distribution
+![Score distribution](charts/score_distribution.png)
+
+Score distribution split by realized outcome. Visible separation between defaulters and non-defaulters is the discriminatory power.
+
 ## Production notes
 
 In a real deployment you'd add:

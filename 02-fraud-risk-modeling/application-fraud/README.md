@@ -46,6 +46,19 @@ The script reports:
 python application_fraud.py
 ```
 
+The script saves three charts to `charts/`:
+
+### ROC and Precision-Recall
+![ROC curve](charts/roc_curve.png)
+![PR curve](charts/pr_curve.png)
+
+ROC against the random baseline; PR is the more useful view at the ~1.5% base rate, since it shows how precision falls off as recall is pushed toward operational targets.
+
+### Feature importance
+![Feature importance](charts/feature_importance.png)
+
+Top features by gain. The identity-mismatch composite, email and phone age, device-seen-before flag, and bureau score dominate — exactly the signals an experienced application-fraud SME would expect.
+
 ## What's intentionally not here
 
 - **Bureau / consortium signals** — Equifax FraudIQ, Experian Precise ID, LexisNexis ThreatMetrix. In production these are the highest-IV features by far.

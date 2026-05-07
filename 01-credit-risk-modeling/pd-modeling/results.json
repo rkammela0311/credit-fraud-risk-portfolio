@@ -1,0 +1,23 @@
+{
+  "n_train": 33343,
+  "n_val": 8336,
+  "n_oot": 8321,
+  "default_rate_dev": 0.12257971640394444,
+  "default_rate_oot": 0.12594640067299603,
+  "logistic_oot_auc": 0.6389963978450045,
+  "xgboost_oot_auc": 0.6259850954539585,
+  "xgboost_oot_gini": 0.25197019090791706,
+  "score_psi_train_vs_oot": 0.002324632261242501,
+  "top_features": {
+    "loan_purpose_small_business": 0.10719999670982361,
+    "home_ownership_RENT": 0.10239999741315842,
+    "credit_history_years": 0.06629999727010727,
+    "age": 0.06499999761581421,
+    "revolving_utilization": 0.06210000067949295,
+    "num_delinquencies_2y": 0.05959999933838844,
+    "dti_ratio": 0.05350000038743019,
+    "employment_years": 0.04740000143647194,
+    "interest_rate": 0.04670000076293945,
+    "annual_income": 0.046300001442432404
+  }
+}

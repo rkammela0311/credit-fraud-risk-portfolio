@@ -41,8 +41,15 @@ from woe_iv import (  # noqa: E402
     woe_iv_categorical,
     woe_iv_numeric,
 )
+from plotting import (  # noqa: E402
+    plot_roc_curve,
+    plot_score_distribution,
+    PALETTE,
+)
+import matplotlib.pyplot as plt  # noqa: E402
 
 DATA_PATH = ROOT / "data" / "credit_loans.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
 
 NUMERIC_FEATURES = [
     "age", "annual_income", "employment_years", "loan_amount", "interest_rate",
@@ -230,6 +237,51 @@ def main() -> None:
         .reset_index()
     print("\n--- Default rate by score band (test) ---")
     print(band_summary.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    plot_roc_curve(y_test.values, p_test,
+                   "Scorecard — ROC Curve (Test)",
+                   str(CHARTS_DIR / "roc_curve.png"))
+    plot_score_distribution(test_scores[y_test.values == 1],
+                            test_scores[y_test.values == 0],
+                            "Scorecard — Score Distribution (Test)",
+                            str(CHARTS_DIR / "score_distribution.png"),
+                            pos_label="Defaulters", neg_label="Non-defaulters")
+
+    # IV bar chart
+    fig, ax = plt.subplots(figsize=(7, max(4, len(iv_rank) * 0.32)))
+    iv_sorted = iv_rank.sort_values("iv", ascending=True)
+    iv_colors = [PALETTE["good"] if v >= 0.10 else
+                 PALETTE["accent"] if v >= 0.02 else PALETTE["neutral"]
+                 for v in iv_sorted.iv]
+    ax.barh(iv_sorted.feature, iv_sorted.iv, color=iv_colors, edgecolor="white")
+    ax.axvline(0.02, color=PALETTE["neutral"], ls="--", lw=1, label="Weak (0.02)")
+    ax.axvline(0.10, color=PALETTE["good"], ls="--", lw=1, label="Medium (0.10)")
+    ax.set_xlabel("Information Value")
+    ax.set_title("Scorecard — Information Value by Feature")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "information_value.png")
+    plt.close(fig)
+
+    # Default rate by score band
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    bars = ax.bar(band_summary["band"].astype(str), band_summary["default_rate"],
+                  color=PALETTE["primary"], edgecolor="white")
+    bars[0].set_color(PALETTE["bad"])
+    bars[-1].set_color(PALETTE["good"])
+    for bar, val, n in zip(bars, band_summary["default_rate"], band_summary["n"]):
+        ax.text(bar.get_x() + bar.get_width() / 2, val,
+                f"{val:.1%}\n(n={n:,})", ha="center", va="bottom", fontsize=9)
+    ax.set_ylabel("Default rate")
+    ax.set_xlabel("Score band")
+    ax.set_title("Scorecard — Default Rate by Score Band (Test)")
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "default_rate_by_band.png")
+    plt.close(fig)
 
     print("\nDone.")
 

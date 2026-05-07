@@ -41,7 +41,11 @@ from xgboost import XGBRegressor
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "03-shared-utilities"))
 
+from plotting import PALETTE  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+
 DATA_PATH = ROOT / "data" / "credit_loans.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
 
 NUMERIC_FEATURES = [
     "annual_income", "loan_amount", "interest_rate", "term_months",
@@ -163,6 +167,53 @@ def main() -> None:
     cal_table["abs_error"] = (cal_table.actual_lgd - cal_table.predicted_lgd).abs()
     print("\nDecile calibration (predicted LGD vs. actual):")
     print(cal_table.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    # LGD distribution
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.hist(test.loss_given_default, bins=40, color=PALETTE["primary"],
+            alpha=0.8, edgecolor="white")
+    ax.set_xlabel("LGD (Loss Given Default)")
+    ax.set_ylabel("Count of accounts")
+    ax.set_title("LGD — Empirical Distribution (Defaulted Accounts)")
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "lgd_distribution.png")
+    plt.close(fig)
+
+    # Predicted vs Actual scatter
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(lgd_pred, test.loss_given_default,
+               alpha=0.25, s=12, color=PALETTE["accent"])
+    ax.plot([0, 1], [0, 1], color=PALETTE["neutral"], ls="--", lw=1,
+            label="Perfect")
+    ax.set_xlabel("Predicted LGD")
+    ax.set_ylabel("Actual LGD")
+    ax.set_title("LGD — Predicted vs. Actual (Test)")
+    ax.legend()
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "predicted_vs_actual.png")
+    plt.close(fig)
+
+    # Decile calibration
+    fig, ax = plt.subplots(figsize=(7, 5))
+    x = cal_table.decile.astype(int) + 1
+    width = 0.4
+    ax.bar(x - width/2, cal_table.predicted_lgd, width=width,
+           label="Predicted", color=PALETTE["primary"], edgecolor="white")
+    ax.bar(x + width/2, cal_table.actual_lgd,    width=width,
+           label="Actual",    color=PALETTE["secondary"], edgecolor="white")
+    ax.set_xlabel("Predicted-LGD decile")
+    ax.set_ylabel("Mean LGD")
+    ax.set_title("LGD — Decile Calibration (Test)")
+    ax.set_xticks(x)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "decile_calibration.png")
+    plt.close(fig)
 
     print("\nDone.")
 

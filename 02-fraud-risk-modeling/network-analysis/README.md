@@ -33,10 +33,17 @@ A flat tabular model can't see this pattern — every transaction or application
 python fraud_ring_detection.py
 ```
 
-Output:
-- Component-level table (size, fraud count, fraud rate)
-- Capture rate of suspicious components (size ≥ 4, fraud rate ≥ 80%)
-- Account-level feature comparison: fraud accounts vs. legit accounts
+Output: stdout summary + two charts in `charts/`.
+
+### Component fraud rate vs. size
+![Component fraud rate](charts/component_fraud_rate.png)
+
+Each dot is a connected component. Most components are small and have low fraud rate — those are normal coincidental attribute overlaps between unrelated accounts. The cluster of larger components at the high-fraud end is the fraud rings: they are big, dense, and almost entirely fraudulent.
+
+### Graph features separate fraud from legit
+![Graph features separation](charts/graph_features_separation.png)
+
+Distribution of node degree and component size by fraud status. Fraud accounts sit in the long right tail of both — exactly the signal the supervised models cannot extract from tabular features alone.
 
 ## Production notes
 

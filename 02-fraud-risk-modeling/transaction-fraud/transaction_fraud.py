@@ -45,8 +45,16 @@ from model_evaluation import (  # noqa: E402
     find_threshold_for_recall,
     print_metrics_block,
 )
+from plotting import (  # noqa: E402
+    plot_roc_curve,
+    plot_pr_curve,
+    plot_confusion,
+    plot_feature_importance,
+    plot_score_distribution,
+)
 
 DATA_PATH = ROOT / "data" / "card_transactions.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
 
 NUMERIC_FEATURES = [
     "amount", "hour_of_day", "txn_count_1h", "txn_count_24h", "amount_sum_24h",
@@ -206,6 +214,36 @@ def main() -> None:
     print(f"  Recall     : {recall:.4f}")
     print(f"  Precision  : {precision:.4f}")
     print(f"  Captured   : {captured} / {total_fraud} OOT fraud")
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    plot_roc_curve(y_oot.values, p_oot,
+                   "Transaction Fraud — ROC Curve (XGBoost, OOT)",
+                   str(CHARTS_DIR / "roc_curve.png"))
+    plot_pr_curve(y_oot.values, p_oot,
+                  "Transaction Fraud — Precision-Recall (XGBoost, OOT)",
+                  str(CHARTS_DIR / "pr_curve.png"))
+    plot_confusion(y_oot.values, ensemble_alert,
+                   "Transaction Fraud — Ensemble Alerts (OOT)",
+                   str(CHARTS_DIR / "confusion_matrix.png"),
+                   labels=("Legit", "Fraud"))
+    plot_score_distribution(p_oot[y_oot.values == 1], p_oot[y_oot.values == 0],
+                            "Transaction Fraud — Score Distribution (OOT)",
+                            str(CHARTS_DIR / "score_distribution.png"),
+                            pos_label="Fraud", neg_label="Legit")
+
+    booster = xgb.named_steps["clf"]
+    feat_names = (
+        NUMERIC_FEATURES + ["amount_log", "velocity_score"]
+        + list(xgb.named_steps["prep"].named_transformers_["cat"]
+               .get_feature_names_out(CATEGORICAL_FEATURES))
+    )
+    plot_feature_importance(feat_names, booster.feature_importances_,
+                            "Transaction Fraud — Top 15 Features (XGBoost gain)",
+                            str(CHARTS_DIR / "feature_importance.png"),
+                            top_n=15)
 
     print("\nDone.")
 

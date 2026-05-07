@@ -1,0 +1,36 @@
+{
+  "total_loans": 50000,
+  "total_exposure": 918059025.4100001,
+  "total_ecl": 258047543.75194383,
+  "portfolio_coverage": 0.28107946941287487,
+  "discount_rate": 0.05,
+  "stages": [
+    {
+      "stage": 1,
+      "stage_name": "Stage 1 (performing)",
+      "n_loans": 42329,
+      "pct_of_book": 0.84658,
+      "exposure": 781709145.36,
+      "ecl": 181075506.359451,
+      "coverage_ratio": 0.23164051160749874
+    },
+    {
+      "stage": 2,
+      "stage_name": "Stage 2 (SICR)",
+      "n_loans": 1514,
+      "pct_of_book": 0.03028,
+      "exposure": 26856650.48,
+      "ecl": 10672667.93593312,
+      "coverage_ratio": 0.3973938575803039
+    },
+    {
+      "stage": 3,
+      "stage_name": "Stage 3 (defaulted)",
+      "n_loans": 6157,
+      "pct_of_book": 0.12314,
+      "exposure": 109493229.57,
+      "ecl": 66299369.45655972,
+      "coverage_ratio": 0.6055111326693852
+    }
+  ]
+}

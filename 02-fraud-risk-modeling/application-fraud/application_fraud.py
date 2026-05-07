@@ -35,8 +35,14 @@ from model_evaluation import (  # noqa: E402
     find_threshold_for_recall,
     print_metrics_block,
 )
+from plotting import (  # noqa: E402
+    plot_roc_curve,
+    plot_pr_curve,
+    plot_feature_importance,
+)
 
 DATA_PATH = ROOT / "data" / "loan_applications.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
 
 
 def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -161,6 +167,21 @@ def main() -> None:
     importances = pd.Series(booster.feature_importances_, index=FEATURES) \
         .sort_values(ascending=False)
     print(importances.head(10).to_string())
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    plot_roc_curve(y_oot.values, p_oot,
+                   "Application Fraud — ROC Curve (XGBoost, OOT)",
+                   str(CHARTS_DIR / "roc_curve.png"))
+    plot_pr_curve(y_oot.values, p_oot,
+                  "Application Fraud — Precision-Recall (XGBoost, OOT)",
+                  str(CHARTS_DIR / "pr_curve.png"))
+    plot_feature_importance(FEATURES, booster.feature_importances_,
+                            "Application Fraud — Top 15 Features",
+                            str(CHARTS_DIR / "feature_importance.png"),
+                            top_n=15)
 
     print("\nDone.")
 

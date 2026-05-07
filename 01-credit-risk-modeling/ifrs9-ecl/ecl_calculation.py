@@ -40,7 +40,12 @@ from sklearn.model_selection import train_test_split
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "03-shared-utilities"))
 
+from plotting import plot_ecl_stage_breakdown, PALETTE  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+
 DATA_PATH = ROOT / "data" / "credit_loans.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
+RESULTS_PATH = Path(__file__).resolve().parent / "results.json"
 
 
 # ---------------------------------------------------------------------------
@@ -256,6 +261,76 @@ def main() -> None:
     print(f"\nTotal ECL provision    : ${total_ecl:,.0f}")
     print(f"Total exposure         : ${total_exposure:,.0f}")
     print(f"Portfolio coverage     : {total_ecl / total_exposure:.4%}")
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    stage_counts = {f"Stage {int(s)}": int(n) for s, n in
+                    zip(summary.stage, summary.n_loans)}
+    stage_ecl   = {f"Stage {int(s)}": float(e) for s, e in
+                   zip(summary.stage, summary.ecl)}
+    stage_exposure = {f"Stage {int(s)}": float(e) for s, e in
+                      zip(summary.stage, summary.exposure)}
+    plot_ecl_stage_breakdown(stage_counts, stage_ecl,
+                             "IFRS 9 ECL — Portfolio Stage Breakdown",
+                             str(CHARTS_DIR / "stage_breakdown.png"))
+
+    # Coverage ratio by stage
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    colors = [PALETTE["good"], "#e0a020", PALETTE["bad"]]
+    bars = ax.bar([f"Stage {int(s)}" for s in summary.stage],
+                  summary.coverage_ratio, color=colors, edgecolor="white")
+    for bar, val in zip(bars, summary.coverage_ratio):
+        ax.text(bar.get_x() + bar.get_width() / 2, val,
+                f"{val:.1%}", ha="center", va="bottom", fontsize=10)
+    ax.set_ylabel("ECL / Exposure")
+    ax.set_title("IFRS 9 ECL — Coverage Ratio by Stage")
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "coverage_ratio.png")
+    plt.close(fig)
+
+    # Lifetime PD curve illustration
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    months = np.arange(1, 61)
+    for one_year_pd, label in [(0.05, "Low risk (1y PD = 5%)"),
+                               (0.15, "Medium risk (1y PD = 15%)"),
+                               (0.30, "High risk (1y PD = 30%)")]:
+        h = -np.log(1 - one_year_pd) / 12
+        cum_pd = 1 - np.exp(-h * months)
+        ax.plot(months, cum_pd, lw=2, label=label)
+    ax.set_xlabel("Months since reporting date")
+    ax.set_ylabel("Cumulative PD")
+    ax.set_title("IFRS 9 ECL — Lifetime PD Curve (Stage 2 inputs)")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "lifetime_pd_curve.png")
+    plt.close(fig)
+
+    # ---- JSON export for executive summary PDF ----
+    import json
+    results = {
+        "total_loans": int(len(ecl_df)),
+        "total_exposure": float(total_exposure),
+        "total_ecl": float(total_ecl),
+        "portfolio_coverage": float(total_ecl / total_exposure),
+        "discount_rate": 0.05,
+        "stages": [
+            {
+                "stage": int(row.stage),
+                "stage_name": stage_names[int(row.stage)],
+                "n_loans": int(row.n_loans),
+                "pct_of_book": float(row.pct_of_book),
+                "exposure": float(row.exposure),
+                "ecl": float(row.ecl),
+                "coverage_ratio": float(row.coverage_ratio),
+            }
+            for _, row in summary.iterrows()
+        ],
+    }
+    with open(RESULTS_PATH, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Saved metrics summary to {RESULTS_PATH.name}")
 
     print("\nDone.")
 

@@ -37,12 +37,28 @@ In a real deployment you'd also have:
 python transaction_fraud.py
 ```
 
-The script prints:
-- Class distribution and time split
-- XGBoost validation + OOT metrics at the tuned threshold
-- Precision @ top-K table on OOT (the metric fraud ops uses)
-- Isolation Forest baseline at top-1% anomaly score
-- Ensemble (XGBoost OR iForest) alert rate, precision, recall, capture
+The script prints all metrics and saves five charts to `charts/`:
+
+### ROC and Precision-Recall
+![ROC curve](charts/roc_curve.png)
+![PR curve](charts/pr_curve.png)
+
+ROC tells you the relative performance against random; the PR curve is the more informative view at the ~0.5% base rate, because it shows how precision degrades as you push to higher recall — exactly the operational tradeoff fraud ops makes.
+
+### Score distribution
+![Score distribution](charts/score_distribution.png)
+
+The two histograms have very different supports — the model puts most legitimate transactions near zero and most fraud near one. The overlap region is where the alert threshold trades precision for recall.
+
+### Feature importance
+![Feature importance](charts/feature_importance.png)
+
+XGBoost gain by feature. Velocity, amount, channel, and time-of-day signals dominate, consistent with industry intuition.
+
+### Ensemble alerts
+![Confusion matrix](charts/confusion_matrix.png)
+
+Confusion matrix for the ensemble alert rule (XGBoost above tuned threshold OR Isolation Forest in top 1% anomaly). Counts and row-normalized rates are shown.
 
 ## Performance considerations
 

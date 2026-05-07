@@ -36,6 +36,23 @@ The script reports:
 - Combined two-stage MAE / RMSE / R² on the full test set
 - Decile calibration table (predicted LGD vs. actual)
 
+It also saves three charts to `charts/`:
+
+### LGD distribution
+![LGD distribution](charts/lgd_distribution.png)
+
+The empirical distribution of LGD on defaulted accounts. The bimodal / U-shape (many low losses, many high losses, less mass in the middle) is what motivates the two-stage decomposition.
+
+### Predicted vs. actual
+![Predicted vs actual](charts/predicted_vs_actual.png)
+
+Scatter of two-stage predictions against realized LGD on the test set. The diagonal is perfect prediction.
+
+### Decile calibration
+![Decile calibration](charts/decile_calibration.png)
+
+Mean predicted LGD vs. mean actual LGD by predicted-LGD decile. Tracking close together across deciles is the property required for downstream ECL consumption.
+
 ## What's intentionally not here
 
 - **Beta regression** — for the severity stage, beta regression is the textbook choice because LGD is bounded in (0,1). I used XGBoost regression here because it handles the categoricals cleanly and the synthetic data doesn't hit the boundary cases that would actually break beta regression. In a real shop, you'd benchmark both.

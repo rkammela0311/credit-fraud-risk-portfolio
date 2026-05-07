@@ -38,8 +38,32 @@ Running the script produces the IFRS 9 portfolio summary you'd put in front of f
 ## Run it
 
 ```bash
-python ecl_calculation.py
+python ecl_calculation.py            # compute ECL + save charts + emit results.json
+python build_executive_summary.py    # (optional) build IFRS9_ECL_Executive_Summary.pdf
 ```
+
+`ecl_calculation.py` saves three charts to `charts/` and a `results.json` summary; `build_executive_summary.py` consumes both to produce a one-page-per-section PDF for finance / risk-committee distribution.
+
+## Charts
+
+### Stage breakdown
+![Stage breakdown](charts/stage_breakdown.png)
+
+Account counts (left) and ECL provision (right) by IFRS 9 stage. Stage 3 is small in count but large in ECL — typical of a portfolio at any reporting date.
+
+### Coverage ratio by stage
+![Coverage ratio](charts/coverage_ratio.png)
+
+ECL / exposure ratio by stage. Stage 1 books only 12-month ECL and shows the lowest coverage; Stage 3 is credit-impaired and tracks LGD directly.
+
+### Lifetime PD construction
+![Lifetime PD curve](charts/lifetime_pd_curve.png)
+
+Cumulative PD over a 60-month horizon for three illustrative risk levels. The constant-hazard transformation produces the marginal PD inputs for Stage 2 lifetime ECL.
+
+## Companion artifact
+
+- **`IFRS9_ECL_Executive_Summary.pdf`** — concise risk-committee summary: KPIs, stage breakdown table, embedded charts, methodology note. Generated from `results.json` by `build_executive_summary.py`.
 
 ## What's intentionally not here
 

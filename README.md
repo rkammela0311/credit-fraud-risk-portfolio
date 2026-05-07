@@ -52,11 +52,31 @@ credit-fraud-risk-portfolio/
 
 ---
 
+## Highlights at a Glance
+
+Each project ships with charts and the metrics you'd expect to see in a real model package:
+
+| Project | Sample chart |
+|---|---|
+| PD Modeling | ![PD ROC](01-credit-risk-modeling/pd-modeling/charts/roc_curve.png) |
+| IFRS 9 ECL | ![ECL stage breakdown](01-credit-risk-modeling/ifrs9-ecl/charts/stage_breakdown.png) |
+| Transaction Fraud | ![Txn fraud PR](02-fraud-risk-modeling/transaction-fraud/charts/pr_curve.png) |
+| Network Analysis | ![Graph features](02-fraud-risk-modeling/network-analysis/charts/graph_features_separation.png) |
+
+Two **PDF deliverables** are also produced from script outputs:
+- `01-credit-risk-modeling/pd-modeling/PD_Model_Card.pdf` — bank-style governance model card (overview, performance, calibration, limitations, monitoring).
+- `01-credit-risk-modeling/ifrs9-ecl/IFRS9_ECL_Executive_Summary.pdf` — risk-committee summary with KPIs, stage breakdown, and methodology note.
+
+A **Jupyter walkthrough** for the PD model:
+- `01-credit-risk-modeling/pd-modeling/PD_Model_Walkthrough.ipynb` — narrative + code walkthrough that renders directly on GitHub.
+
+---
+
 ## Getting Started
 
 ```bash
 # clone the repo
-git clone https://github.com/ramkammela/credit-fraud-risk-portfolio.git
+git clone https://github.com/<your-username>/credit-fraud-risk-portfolio.git
 cd credit-fraud-risk-portfolio
 
 # set up environment

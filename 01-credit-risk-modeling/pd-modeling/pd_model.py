@@ -39,8 +39,17 @@ from model_evaluation import (  # noqa: E402
     population_stability_index,
     print_metrics_block,
 )
+from plotting import (  # noqa: E402
+    plot_roc_curve,
+    plot_calibration,
+    plot_decile_lift,
+    plot_feature_importance,
+    plot_score_distribution,
+)
 
 DATA_PATH = ROOT / "data" / "credit_loans.csv"
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
+RESULTS_PATH = Path(__file__).resolve().parent / "results.json"
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +204,52 @@ def main() -> None:
     )
     importances = pd.Series(booster.feature_importances_, index=feat_names)
     print(importances.sort_values(ascending=False).head(10).to_string())
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+    p_oot_xgb = xgb.predict_proba(X_oot)[:, 1]
+    p_oot_lr  = logit.predict_proba(X_oot)[:, 1]
+    p_train_xgb = xgb.predict_proba(X_train)[:, 1]
+
+    plot_roc_curve(y_oot, p_oot_xgb,
+                   "PD Model — ROC Curve (XGBoost, OOT)",
+                   str(CHARTS_DIR / "roc_curve.png"))
+    plot_calibration(y_oot, p_oot_xgb,
+                     "PD Model — Calibration (XGBoost, OOT)",
+                     str(CHARTS_DIR / "calibration.png"))
+    plot_decile_lift(y_oot, p_oot_xgb,
+                     "PD Model — Decile Lift (XGBoost, OOT)",
+                     str(CHARTS_DIR / "decile_lift.png"))
+    plot_feature_importance(feat_names, booster.feature_importances_,
+                            "PD Model — Top 15 Features (XGBoost gain)",
+                            str(CHARTS_DIR / "feature_importance.png"),
+                            top_n=15)
+    plot_score_distribution(p_oot_xgb[y_oot == 1], p_oot_xgb[y_oot == 0],
+                            "PD Model — Score Distribution (OOT)",
+                            str(CHARTS_DIR / "score_distribution.png"),
+                            pos_label="Defaulters", neg_label="Non-defaulters")
+
+    # ---- export results for downstream PDF/notebook ----
+    import json
+    from sklearn.metrics import roc_auc_score
+    summary = {
+        "n_train": int(len(X_train)),
+        "n_val": int(len(X_val)),
+        "n_oot": int(len(X_oot)),
+        "default_rate_dev": float(y_dev.mean()),
+        "default_rate_oot": float(y_oot.mean()),
+        "logistic_oot_auc": float(roc_auc_score(y_oot, p_oot_lr)),
+        "xgboost_oot_auc": float(roc_auc_score(y_oot, p_oot_xgb)),
+        "xgboost_oot_gini": float(2 * roc_auc_score(y_oot, p_oot_xgb) - 1),
+        "score_psi_train_vs_oot": float(
+            population_stability_index(p_train_xgb, p_oot_xgb)),
+        "top_features": importances.sort_values(ascending=False)
+                                   .head(10).round(4).to_dict(),
+    }
+    with open(RESULTS_PATH, "w") as f:
+        json.dump(summary, f, indent=2)
+    print(f"Saved metrics summary to {RESULTS_PATH.name}")
 
     print("\nDone.")
 

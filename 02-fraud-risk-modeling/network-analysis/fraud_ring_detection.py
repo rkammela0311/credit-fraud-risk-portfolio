@@ -31,6 +31,11 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "03-shared-utilities"))
 
+from plotting import PALETTE  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+
+CHARTS_DIR = Path(__file__).resolve().parent / "charts"
+
 RNG = np.random.default_rng(7)
 
 
@@ -207,6 +212,56 @@ def main() -> None:
     # The graph features should massively separate the two populations:
     print("\nFraud accounts have order-of-magnitude higher degree and component size.")
     print("In production these would feed the application-fraud model as additional features.")
+
+    # ---- charts ----
+    CHARTS_DIR.mkdir(exist_ok=True)
+    print(f"\nSaving charts to {CHARTS_DIR}/ …")
+
+    # Component fraud-rate distribution
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    big_comps = comp_df[comp_df["size"] >= 2]
+    ax.scatter(big_comps["size"], big_comps.fraud_rate,
+               s=big_comps["size"] * 8, alpha=0.6,
+               c=[PALETTE["bad"] if r >= 0.8 else PALETTE["accent"]
+                  for r in big_comps.fraud_rate],
+               edgecolor="white")
+    ax.axhline(0.80, color=PALETTE["bad"], ls="--", lw=1, label="High-risk threshold (80%)")
+    ax.set_xlabel("Component size (# accounts)")
+    ax.set_ylabel("Fraud rate within component")
+    ax.set_title("Network Analysis — Connected Component Fraud Rate")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "component_fraud_rate.png")
+    plt.close(fig)
+
+    # Feature separation: degree by fraud status
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+    legit_deg = feat[feat.is_fraud == 0].degree
+    fraud_deg = feat[feat.is_fraud == 1].degree
+    axes[0].hist([legit_deg, fraud_deg], bins=15,
+                 label=["Legit", "Fraud"], color=[PALETTE["primary"], PALETTE["bad"]],
+                 edgecolor="white")
+    axes[0].set_xlabel("Node degree (# linked accounts)")
+    axes[0].set_ylabel("Account count")
+    axes[0].set_title("Degree by Fraud Status")
+    axes[0].legend()
+
+    legit_cs = feat[feat.is_fraud == 0].component_size
+    fraud_cs = feat[feat.is_fraud == 1].component_size
+    axes[1].hist([legit_cs, fraud_cs], bins=15,
+                 label=["Legit", "Fraud"], color=[PALETTE["primary"], PALETTE["bad"]],
+                 edgecolor="white")
+    axes[1].set_xlabel("Component size")
+    axes[1].set_ylabel("Account count")
+    axes[1].set_title("Component Size by Fraud Status")
+    axes[1].legend()
+
+    fig.suptitle("Network Analysis — Graph Features Separate Fraud from Legit",
+                 fontsize=12, fontweight="bold", y=1.02)
+    fig.tight_layout()
+    fig.savefig(CHARTS_DIR / "graph_features_separation.png", bbox_inches="tight")
+    plt.close(fig)
+
     print("\nDone.")
 
 
