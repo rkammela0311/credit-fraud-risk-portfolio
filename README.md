@@ -1,4 +1,7 @@
 # Credit Risk & Fraud Risk Modeling Portfolio
+# Credit Risk & Fraud Risk Modeling Portfolio
+
+**Author:** Ram Kammela
 
 A production-grade portfolio demonstrating end-to-end modeling work across the two pillars of consumer/commercial lending risk: **credit risk** (will the borrower pay?) and **fraud risk** (is this transaction or applicant legitimate?).
 
